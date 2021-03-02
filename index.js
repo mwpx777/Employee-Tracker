@@ -1,8 +1,8 @@
 const express = require('express');
 const inquirer = require('inquirer');
 const fs = require('fs');
-const { choices } = require('yargs');
-const { addSnapshotSerializer } = require('expect');
+let employeesArray = [];
+
 
 const introQuestions = () => {
     return inquirer.prompt([
@@ -10,7 +10,7 @@ const introQuestions = () => {
             type: 'rawlist',
             name: 'option',
             message: 'Welcome to Employee Tracker!  Please make a selection.',
-            choices: ['View all departments', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role']
+            choices: ['View all departments', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role', 'QUIT']
         }
     ])
 
@@ -25,8 +25,10 @@ const introQuestions = () => {
                 addRole()
             } else if (option === 'Add an employee') {
                 addEmployee()
-            } else {
+            } else if (option === 'Update employee role') {
                 updateEmployeeRole()
+            } else{
+                return;
             }
         })
 
@@ -34,10 +36,16 @@ const introQuestions = () => {
 
 const viewDepartments = () => {
     console.log("view departments")
+    
+        introQuestions()
+
 };
 
 const viewEmployees = () => {
     console.log("view employees")
+    
+        introQuestions()
+
 };
 
 const addDepartment = () => {
@@ -57,6 +65,9 @@ const addDepartment = () => {
             }
         }
     ])
+    // .then(
+    //     introQuestions()
+    // );
 
 };
 
@@ -75,8 +86,37 @@ const addRole = () => {
                     return false;
                 }
             }
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'Please enter a salary (Required)',
+            validate: salaryInput => {
+                if (salaryInput) {
+                    return true;
+                } else {
+                    console.log("Please enter a salary!");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'departmentId',
+            message: 'Please enter department ID (Required)',
+            validate: departmentIdInput => {
+                if (departmentIdInput) {
+                    return true;
+                } else {
+                    console.log("Please enter department ID!");
+                    return false;
+                }
+            }
         }
     ])
+    // .then(
+    //     introQuestions()
+    // );
 };
 
 const addEmployee = () => {
@@ -84,18 +124,69 @@ const addEmployee = () => {
     return inquirer.prompt([
         {
             type: 'input',
-            name: 'employeeName',
-            message: 'Please enter new employee name (Required)',
-            validate: employeeNameInput => {
-                if (employeeNameInput) {
+            name: 'employeeFirstName',
+            message: "Please enter new employee's first name (Required)",
+            validate: employeeFirstNameInput => {
+                if (employeeFirstNameInput) {
                     return true;
                 } else {
-                    console.log("Please enter a new employee name!");
+                    console.log("Please enter new employee's first name!");
                     return false;
                 }
             }
-        }
+        },
+        {
+            type: 'input',
+            name: 'employeeLastName',
+            message: "Please enter new employee's last name (Required)",
+            validate: employeeLastNameInput => {
+                if (employeeLastNameInput) {
+                    return true;
+                } else {
+                    console.log("Please enter new employee's last name!");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'employeeManagerId',
+            message: "Please enter new employee's Manager ID (Required)",
+            validate: employeeManagerIdInput => {
+                if (employeeManagerIdInput) {
+                    return true;
+                } else {
+                    console.log("Please enter new employee's Manager ID!");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'employeeRoleId',
+            message: "Please enter new employee's role ID (Required)",
+            validate: employeeRoleIdInput => {
+                if (employeeRoleIdInput) {
+                    return true;
+                } else {
+                    console.log("Please enter new employee's role ID!");
+                    return false;
+                }
+            }
+        },
+    
     ])
+    .then(({employeeFirstName, employeeLastName, employeeManagerId, employeeRoleId }) => {
+        console.log(employeeFirstName, employeeLastName)
+         employeesArray.push((employeeFirstName, employeeLastName, employeeManagerId, employeeRoleId));
+        
+         introQuestions()
+
+
+   });
+    // .then(
+    //     introQuestions()
+    // );
 };
 
 
@@ -116,6 +207,10 @@ const updateEmployeeRole = () => {
             }
         }
     ])
+    // .then(
+    //     introQuestions()
+    // );
+    
 };
 
 introQuestions();

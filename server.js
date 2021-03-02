@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('./db/database');
+const apiRoutes = require('./routes/apiRoutes');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -7,6 +8,7 @@ const app = express();
 // express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use('/api', apiRoutes);
 
 app.get('/', (req, res) => {
     res.send('Connection working!');
