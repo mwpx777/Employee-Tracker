@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../../db/database');
 
 router.get('/roles', (req, res) =>{
-    const sql = require 
+    const sql = `SELECT * FROM roles`;
     const params = [req.params.id];
     db.get(sql, params, (err, rows) =>{
         if (err){
