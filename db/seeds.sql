@@ -13,7 +13,7 @@ VALUES
     ('Employee', $40000, 2),
     ('Dog', $10000, 3);
 
-INSERT INTO departments (name)
+INSERT INTO departments (department_name)
 VALUES
     ('Web Development'),
     ('Behavorial Care'),
