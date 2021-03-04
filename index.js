@@ -13,6 +13,7 @@ const db = mysql.createConnection({
     database: "company_db"
 });
 
+
 // connect
 db.connect((err) => {
     if (err) {
@@ -23,7 +24,7 @@ db.connect((err) => {
 
 });
 
-
+// intro questions
 const introQuestions = () => {
     return inquirer.prompt([
         {
@@ -32,7 +33,7 @@ const introQuestions = () => {
             message: `Welcome to Employee Tracker!
 
 Please make a selection.`,
-            choices: ['View all departments', 'View all roles', 'View all employees', 'View employees by manager', 'Add a department', 'Add a role', 'Add an employee', 'Update employee', 'Remove Employee', 'Exit']
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee', 'Remove Employee', 'Exit']
         }
     ])
 
@@ -43,8 +44,6 @@ Please make a selection.`,
                 viewRoles()
             } else if (option === 'View all employees') {
                 viewEmployees()
-            } else if (option === 'View employees by manager') {
-                viewEmployeesByManager()
             } else if (option === 'Add a department') {
                 addDepartment()
             } else if (option === 'Add a role') {
@@ -62,6 +61,7 @@ Please make a selection.`,
 
 };
 
+// view department function
 const viewDepartments = () => {
     db.query(`SELECT * FROM departments`, function (err, res) {
         if (err) {
@@ -73,6 +73,8 @@ const viewDepartments = () => {
 
     })
 };
+
+// view roles function
 const viewRoles = () => {
     db.query(`SELECT * FROM role LEFT JOIN departments ON role.departments_id = departments.id`, function (err, res) {
         if (err) {
@@ -85,11 +87,14 @@ const viewRoles = () => {
     })
 };
 
-
+// view employees function
 const viewEmployees = () => {
     // db.query(`SELECT  first_name, last_name, role_id, manager_id FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
 
-        db.query(`SELECT  * FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
+    // db.query(`SELECT * FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
+
+        db.query(`SELECT * FROM employees LEFT JOIN role ON employees.role_id = role.id
+                `, function (err, res) {    
 
         if (err) {
             console.log("view employees error")
@@ -101,24 +106,7 @@ const viewEmployees = () => {
     })
 };
 
-const viewEmployeesByManager= ()=>{
-    db.query(`SELECT * FROM employees LEFT JOIN managers ON employees.role_id = managers.id 
-    `, function (err, res) {
-        // db.query(`SELECT first_name, last_name, manager_id FROM employees LEFT JOIN managers ON employees.role_id = managers.id 
-        // `, function (err, res) {
-
-        if (err) {
-            console.log("view employees error")
-        } else {
-            console.table('EMPLOYEES', res);
-            introQuestions()
-        }
-
-    })
-};
-    
-
-
+// add department function
 const addDepartment = () => {
 
     db.query("SELECT * FROM departments", function (err, res) {
@@ -168,6 +156,8 @@ const addDepartment = () => {
         };
     });
 };
+
+// add role function
 const addRole = () => {
     console.log("add role")
     return inquirer.prompt([
@@ -222,8 +212,8 @@ const addRole = () => {
 
 };
 
+// add employee function
 const addEmployee = () => {
-    // console.log("add employee")
     return inquirer.prompt([
         {
             type: 'input',
@@ -284,7 +274,6 @@ const addEmployee = () => {
         .then(function (answer) {
             db.query("INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManagerId], function (err, res) {
                 if (err) throw err;
-                // console.log(res);
                 console.log("New Employee Created!")
                 introQuestions();
             })
@@ -292,54 +281,51 @@ const addEmployee = () => {
         })
 };
 
+// update employee function
 const updateEmployee = () => {
     // console.log("update employee role")
-    db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`, 
-    function (err, employeeNames) {
-        if (err) throw err;
-        console.log(employeeNames)
-        employeeNames = employeeNames.map(employee => {
-            return {
-                name: employee.employeeName,
-                value: employee.id
-            }
-        })
-        // console.log(employeeNames);
-        // let employeeArray = [res];
-        // res.forEach(employeeName);
-
-    
-
-    return inquirer.prompt({
-
-        type: 'list',
-        name: 'option',
-        message: 'Please choose an employee to update',
-        choices: employeeNames
-    })
-        .then(function (answer) {
-            // let employeeNames = answer.employee.split("");
-            console.log(answer);
-            let id = answer.option
-            return inquirer.prompt([
-                {
-                    type: 'input',
-                    name: 'employeeRole',
-                    message: 'Enter new role ID',
-                    
+    db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`,
+        function (err, employeeNames) {
+            if (err) throw err;
+            console.log(employeeNames)
+            employeeNames = employeeNames.map(employee => {
+                return {
+                    name: employee.employeeName,
+                    value: employee.id
                 }
-            ])
-                
-                  .then(function (answer){
-                    db.query(`UPDATE employees SET role_id = "${answer.employeeRole}" WHERE id = ${id}`, function (err) {
-                        if (err) throw err;
-                        introQuestions()
-                    })
-                });
-        })
-    });
+            })
+
+            return inquirer.prompt({
+
+                type: 'list',
+                name: 'option',
+                message: 'Please choose an employee to update',
+                choices: employeeNames
+            })
+                .then(function (answer) {
+                    // let employeeNames = answer.employee.split("");
+                    console.log(answer);
+                    let id = answer.option
+                    return inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'employeeRole',
+                            message: 'Enter new role ID',
+
+                        }
+                    ])
+
+                        .then(function (answer) {
+                            db.query(`UPDATE employees SET role_id = "${answer.employeeRole}" WHERE id = ${id}`, function (err) {
+                                if (err) throw err;
+                                introQuestions()
+                            })
+                        });
+                })
+        });
 };
 
+// remove employee function
 const removeEmployee = () => {
     // console.log("update employee role")
     db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`, function (err, employeeNames) {
@@ -352,31 +338,31 @@ const removeEmployee = () => {
             }
         })
 
-    
 
-    return inquirer.prompt({
 
-        type: 'list',
-        name: 'option',
-        message: 'Please choose an employee to remove',
-        choices: employeeNames
-    })
-    .then(function (answer) {
-        let id = answer.option
-        let sql = `DELETE FROM employees WHERE id = ?`
-        db.query(sql,[id], function(err, res){
-                  
-            if (err) throw err;
-            // console.log(res);
-            console.log("Employee Deleted!")
-            introQuestions();
+        return inquirer.prompt({
+
+            type: 'list',
+            name: 'option',
+            message: 'Please choose an employee to remove',
+            choices: employeeNames
         })
-    });
+            .then(function (answer) {
+                let id = answer.option
+                let sql = `DELETE FROM employees WHERE id = ?`
+                db.query(sql, [id], function (err, res) {
+
+                    if (err) throw err;
+                    // console.log(res);
+                    console.log("Employee Deleted!")
+                    introQuestions();
+                })
+            });
     })
 
 };
 
-
+// create database function
 app.get('/createdb', (req, res) => {
     let sql = `CREATE DATABASE company_db`
     db.query(sql, (err, result) => {
@@ -386,7 +372,7 @@ app.get('/createdb', (req, res) => {
     });
 });
 
-
+// listen on port function
 app.listen('3001', () => {
     console.log('Server started on port 3001');
 });
