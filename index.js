@@ -257,33 +257,73 @@ const addEmployee = () => {
 };
 
 const updateEmployeeRole = () => {
-    console.log("update employee role")
-    return inquirer.prompt([
-        {
-            type: 'input',
-            name: 'employeeRole',
-            message: 'Please enter new employee role (Required)',
-            validate: employeeRoleInput => {
-                if (employeeRoleInput) {
-                    return true;
-                } else {
-                    console.log("Please enter a new employee role!");
-                    return false;
-                }
-            }
-        }
-    ])
-    .then(function (answer) {
-        db.query("INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManagerId], function (err, res) {
-            if (err) throw err;
-            // console.log(res);
-            console.log("New Employee Created!")
-            introQuestions();
-        })
+    // console.log("update employee role")
+    db.query("SELECT concat(first_name, ' ' ,last_name) as employeeName FROM employees", function (err, res) {
+        if (err) throw err;
+        let employeeArray = [];
+        res.forEach(employeeName);
 
+    });
+
+    return inquirer.prompt({
+
+        type: 'rawlist',
+        name: 'option',
+        message: 'Please choose an employee to update',
+        choices: employeeArray
     })
-    
+        .then(function (answer) {
+            let employeeName = answer.employee.split("");
 
+
+            return inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employee',
+                    message: 'What would you like to change?',
+                    choices: ["First Name", "Last Name", "Role ID", "Manager ID"]
+
+                }
+            ])
+                .then(function (answer) {
+                    return inquirer.prompt([
+                        {
+                            type: "inputChoice",
+                            name: 'employee',
+                            message: `Enter new ${answer.employee}`
+                        }
+                    ])
+                })
+                .then(function (answer) {
+                    let choice = "";
+                    switch (answer.employee) {
+                        case "First Name":
+                            choice = 'first_name'
+                            break;
+                        case "Last Name":
+                            choice = 'last_name'
+                            break;
+                        case "Role ID":
+                            choice = 'role_id'
+                            break;
+                        case "Manager ID":
+                            choice = 'manager_id'
+                            break;
+                    }
+                }
+        )})
+
+                .then(function (answer) {
+                    db.query("INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManagerId], function (err, res) {
+                        if (err) throw err;
+                        // console.log(res);
+                        console.log("Employee Updated!")
+                        introQuestions();
+                    })
+
+                })
+
+    
 };
 
 app.get('/createdb', (req, res) => {
