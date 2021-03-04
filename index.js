@@ -32,7 +32,7 @@ const introQuestions = () => {
             message: `Welcome to Employee Tracker!
 
 Please make a selection.`,
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role', 'Exit']
+            choices: ['View all departments', 'View all roles', 'View all employees', 'View employees by manager', 'Add a department', 'Add a role', 'Add an employee', 'Update employee', 'Remove Employee', 'Exit']
         }
     ])
 
@@ -43,14 +43,18 @@ Please make a selection.`,
                 viewRoles()
             } else if (option === 'View all employees') {
                 viewEmployees()
+            } else if (option === 'View employees by manager') {
+                viewEmployeesByManager()
             } else if (option === 'Add a department') {
                 addDepartment()
             } else if (option === 'Add a role') {
                 addRole()
             } else if (option === 'Add an employee') {
                 addEmployee()
-            } else if (option === 'Update employee role') {
-                updateEmployeeRole()
+            } else if (option === 'Update employee') {
+                updateEmployee()
+            } else if (option === 'Remove Employee') {
+                removeEmployee()
             } else {
                 return;
             }
@@ -63,18 +67,18 @@ const viewDepartments = () => {
         if (err) {
             console.log("view department error")
         } else {
-            console.table('Departments', res);
+            console.table('DEPARTMENTS', res);
             introQuestions()
         }
 
     })
 };
 const viewRoles = () => {
-    db.query(`SELECT * FROM role`, function (err, res) {
+    db.query(`SELECT * FROM role LEFT JOIN departments ON role.departments_id = departments.id`, function (err, res) {
         if (err) {
             console.log("view roles error")
         } else {
-            console.table('Roles', res);
+            console.table('ROLES', res);
             introQuestions()
         }
 
@@ -83,17 +87,37 @@ const viewRoles = () => {
 
 
 const viewEmployees = () => {
-    db.query("SELECT * FROM employees", function (err, res) {
+    // db.query(`SELECT  first_name, last_name, role_id, manager_id FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
+
+        db.query(`SELECT  * FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
 
         if (err) {
             console.log("view employees error")
         } else {
-            console.table('Employees', res);
+            console.table('EMPLOYEES', res);
             introQuestions()
         }
 
     })
 };
+
+const viewEmployeesByManager= ()=>{
+    db.query(`SELECT * FROM employees LEFT JOIN managers ON employees.role_id = managers.id 
+    `, function (err, res) {
+        // db.query(`SELECT first_name, last_name, manager_id FROM employees LEFT JOIN managers ON employees.role_id = managers.id 
+        // `, function (err, res) {
+
+        if (err) {
+            console.log("view employees error")
+        } else {
+            console.table('EMPLOYEES', res);
+            introQuestions()
+        }
+
+    })
+};
+    
+
 
 const addDepartment = () => {
 
@@ -101,7 +125,7 @@ const addDepartment = () => {
         if (err) {
             console.log("view employees error")
         } else {
-            console.table('Department list', res);
+            console.table('DEPARTMENT LIST', res);
 
             return inquirer.prompt([
                 {
@@ -116,10 +140,23 @@ const addDepartment = () => {
                             return false;
                         }
                     }
+                },
+                {
+                    type: 'input',
+                    name: 'managerId',
+                    message: 'Please enter Manager ID(Required)',
+                    validate: departmentInput => {
+                        if (departmentInput) {
+                            return true;
+                        } else {
+                            console.log("Please enter Manager ID!");
+                            return false;
+                        }
+                    }
                 }
             ])
                 .then(function (answer) {
-                    db.query("INSERT INTO departments (departments_name) VALUES (?)", [answer.department], function (err, res) {
+                    db.query("INSERT INTO departments (departments_name, manager_id) VALUES (?,?)", [answer.department, answer.managerId], function (err, res) {
                         if (err) throw err;
                         // console.log(res);
                         console.log("New Department Created!")
@@ -177,7 +214,6 @@ const addRole = () => {
         .then(function (answer) {
             db.query("INSERT INTO role (title, salary, departments_id) VALUES (?,?,?)", [answer.role, answer.salary, answer.departmentId], function (err, res) {
                 if (err) throw err;
-                // console.log(res);
                 console.log("New Department Created!")
                 introQuestions();
             })
@@ -187,7 +223,7 @@ const addRole = () => {
 };
 
 const addEmployee = () => {
-    console.log("add employee")
+    // console.log("add employee")
     return inquirer.prompt([
         {
             type: 'input',
@@ -256,78 +292,93 @@ const addEmployee = () => {
         })
 };
 
-const updateEmployeeRole = () => {
+const updateEmployee = () => {
     // console.log("update employee role")
-    db.query("SELECT concat(first_name, ' ' ,last_name) as employeeName FROM employees", function (err, res) {
+    db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`, 
+    function (err, employeeNames) {
         if (err) throw err;
-        let employeeArray = [];
-        res.forEach(employeeName);
+        console.log(employeeNames)
+        employeeNames = employeeNames.map(employee => {
+            return {
+                name: employee.employeeName,
+                value: employee.id
+            }
+        })
+        // console.log(employeeNames);
+        // let employeeArray = [res];
+        // res.forEach(employeeName);
 
-    });
+    
 
     return inquirer.prompt({
 
-        type: 'rawlist',
+        type: 'list',
         name: 'option',
         message: 'Please choose an employee to update',
-        choices: employeeArray
+        choices: employeeNames
     })
         .then(function (answer) {
-            let employeeName = answer.employee.split("");
-
-
+            // let employeeNames = answer.employee.split("");
+            console.log(answer);
+            let id = answer.option
             return inquirer.prompt([
                 {
-                    type: 'list',
-                    name: 'employee',
-                    message: 'What would you like to change?',
-                    choices: ["First Name", "Last Name", "Role ID", "Manager ID"]
-
+                    type: 'input',
+                    name: 'employeeRole',
+                    message: 'Enter new role ID',
+                    
                 }
             ])
-                .then(function (answer) {
-                    return inquirer.prompt([
-                        {
-                            type: "inputChoice",
-                            name: 'employee',
-                            message: `Enter new ${answer.employee}`
-                        }
-                    ])
-                })
-                .then(function (answer) {
-                    let choice = "";
-                    switch (answer.employee) {
-                        case "First Name":
-                            choice = 'first_name'
-                            break;
-                        case "Last Name":
-                            choice = 'last_name'
-                            break;
-                        case "Role ID":
-                            choice = 'role_id'
-                            break;
-                        case "Manager ID":
-                            choice = 'manager_id'
-                            break;
-                    }
-                }
-        )})
-
-                .then(function (answer) {
-                    db.query("INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManagerId], function (err, res) {
+                
+                  .then(function (answer){
+                    db.query(`UPDATE employees SET role_id = "${answer.employeeRole}" WHERE id = ${id}`, function (err) {
                         if (err) throw err;
-                        // console.log(res);
-                        console.log("Employee Updated!")
-                        introQuestions();
+                        introQuestions()
                     })
-
-                })
-
-    
+                });
+        })
+    });
 };
 
+const removeEmployee = () => {
+    // console.log("update employee role")
+    db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`, function (err, employeeNames) {
+        if (err) throw err;
+        console.log(employeeNames)
+        employeeNames = employeeNames.map(employee => {
+            return {
+                name: employee.employeeName,
+                value: employee.id
+            }
+        })
+
+    
+
+    return inquirer.prompt({
+
+        type: 'list',
+        name: 'option',
+        message: 'Please choose an employee to remove',
+        choices: employeeNames
+    })
+    .then(function (answer) {
+        let id = answer.option
+        let sql = `DELETE FROM employees WHERE id = ?`
+        db.query(sql,[id], function(err, res){
+                  
+            if (err) throw err;
+            // console.log(res);
+            console.log("Employee Deleted!")
+            introQuestions();
+        })
+    });
+    })
+
+};
+
+
 app.get('/createdb', (req, res) => {
-    let sql = 'CREATE DATABASE newdb1'
+    let sql = `CREATE DATABASE company_db`
     db.query(sql, (err, result) => {
         if (err) throw err;
         console.log(result);
@@ -341,3 +392,21 @@ app.listen('3001', () => {
 });
 
 
+
+// GIVEN a command-line application that accepts user input
+// WHEN I start the application
+// THEN I am presented with the following options: view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
+// WHEN I choose to view all departments
+// THEN I am presented with a formatted table showing department names and department ids
+// WHEN I choose to view all roles
+// THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
+// WHEN I choose to view all employees
+// THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
+// WHEN I choose to add a department
+// THEN I am prompted to enter the name of the department and that department is added to the database
+// WHEN I choose to add a role
+// THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database
+// WHEN I choose to add an employee
+// THEN I am prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database
+// WHEN I choose to update an employee role
+// THEN I am prompted to select an employee to update and their new role and this information is updated in the database 

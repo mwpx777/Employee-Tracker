@@ -4,8 +4,8 @@ VALUES
     ('Kathryn', 'Peterson', 2, 1),
     ('Tyler', 'Peterson', 3, 1),
     ('Madalyn', 'Peterson', 3, 1),
-    ('Maggie', 'Peterson', 4, 2),
-    ('Zoey', 'Peterson', 4, 3);
+    ('Maggie', 'Peterson', 2, 2),
+    ('Zoey', 'Peterson', 3, 3);
 
 INSERT INTO role (title, salary, departments_id)
 VALUES
