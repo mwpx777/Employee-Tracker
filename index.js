@@ -44,8 +44,6 @@ const introQuestions = () => {
             type: 'rawlist',
             name: 'option',
             message: `Please make a selection.`,
-
-
             choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role', 'Remove employee', 'Exit']
         }
     ])
@@ -77,8 +75,9 @@ const introQuestions = () => {
 
 // view department function
 const viewDepartments = () => {
-    db.query(`SELECT departments.id AS ID , departments_name AS DEPARTMENT
-            FROM departments`, function (err, res) {
+    db.query(`SELECT departments.id AS ID ,
+             departments_name AS DEPARTMENT
+             FROM departments`, function (err, res) {
         if (err) {
             console.log("view department error")
         } else {
@@ -178,26 +177,14 @@ const addRole = () => {
     return inquirer.prompt([
         {
             type: 'input',
-            name: 'role',
+            name: 'title',
             message: 'Please enter new role (Required)',
-            validate: roleInput => {
-                if (roleInput) {
+            validate: titleInput => {
+                if (titleInput) {
+                    
                     return true;
                 } else {
                     console.log("Please enter a new role!");
-                    return false;
-                }
-            }
-        },
-        {
-            type: 'input',
-            name: 'salary',
-            message: 'Please enter a salary (Required)',
-            validate: salaryInput => {
-                if (salaryInput) {
-                    return true;
-                } else {
-                    console.log("Please enter a salary!");
                     return false;
                 }
             }
@@ -215,12 +202,42 @@ const addRole = () => {
                 }
             }
         },
+    
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'Please enter a salary (Required)',
+            validate: salaryInput => {
+                if (salaryInput) {
+              
+                return true;
+                } else {
+                    console.log("Please enter a salary!");
+                    return false;
+                }
+            }
+        },
+       
+        {
+            type: 'input',
+            name: 'managerName',
+            message: 'Please enter department manager name (Required)',
+            validate: managerNameInput => {
+                if (managerNameInput) {
+                    return true;
+                } else {
+                    console.log("Please enter department manager name!");
+                    return false;
+                }
+            }
+        },
         {
             type: 'input',
             name: 'departmentId',
             message: 'Please enter department ID (Required)',
             validate: departmentIdInput => {
                 if (departmentIdInput) {
+                    
                     return true;
                 } else {
                     console.log("Please enter department ID!");
@@ -229,8 +246,9 @@ const addRole = () => {
             }
         }
     ])
+   
         .then(function (answer) {
-            db.query("INSERT INTO role (title, salary, departments_ name, departments_id) VALUES (?,?,?,?)", [answer.role, answer.salary, answer.departmentName, answer.departmentId], function (err, res) {
+            db.query("INSERT INTO role (departments_name, title, salary, manager_name, departments_id) VALUES (?,?,?,?,?)", [answer.departmentName, answer.title, answer.salary, answer.managerName, answer.departmentId], function (err, res) {
                 if (err) throw err;
                 console.log("New Department Created!")
                 introQuestions();
@@ -285,7 +303,7 @@ const addEmployee = () => {
 
     ])
         .then(function (answer) {
-            db.query("INSERT INTO employees (first_name, last_name, role_id) VALUES (?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManager,], function (err, res) {
+            db.query("INSERT INTO employees (first_name, last_name, role_id) VALUES (?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId ], function (err, res) {
                 if (err) throw err;
                 console.log("New Employee Created!")
                 introQuestions();
