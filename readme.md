@@ -33,6 +33,7 @@ https://mwpx777.github.io/Employee-Tracker/
 ## **Screenshot**
 ![screenshot](assets/images/screenshot.png)
 
+
 ## **Installation**
 Please type node index.js from command line
 
