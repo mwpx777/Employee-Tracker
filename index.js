@@ -4,6 +4,7 @@ const consoleTable = require('console.table');
 const mysql = require('mysql');
 const app = express();
 const mysql2 = require('mysql2');
+const figlet = require('figlet');
 
 
 // create connection
@@ -13,6 +14,7 @@ const db = mysql.createConnection({
     password: "Madalyn2006!",
     database: "company_db"
 });
+
 
 
 // connect
@@ -25,16 +27,26 @@ db.connect((err) => {
 
 });
 
+// ASCII TITLE
+console.log(figlet.textSync('EMPLOYEE TRACKER', {
+    font: 'standard',
+    horizontalLayout: 'fitted',
+    verticalLayout: 'default',
+    width: 120,
+    whitespaceBreak: true
+}));
+
 // intro questions
 const introQuestions = () => {
+
     return inquirer.prompt([
         {
             type: 'rawlist',
             name: 'option',
-            message: `Welcome to Employee Tracker!
+            message: `Please make a selection.`,
 
-Please make a selection.`,
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee', 'Remove Employee', 'Exit']
+
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update employee role', 'Remove employee', 'Exit']
         }
     ])
 
@@ -51,11 +63,12 @@ Please make a selection.`,
                 addRole()
             } else if (option === 'Add an employee') {
                 addEmployee()
-            } else if (option === 'Update employee') {
+            } else if (option === 'Update employee role') {
                 updateEmployee()
-            } else if (option === 'Remove Employee') {
+            } else if (option === 'Remove employee') {
                 removeEmployee()
             } else {
+                db.end;
                 return;
             }
         })
@@ -64,7 +77,8 @@ Please make a selection.`,
 
 // view department function
 const viewDepartments = () => {
-    db.query(`SELECT * FROM departments`, function (err, res) {
+    db.query(`SELECT departments.id AS ID , departments_name AS DEPARTMENT
+            FROM departments`, function (err, res) {
         if (err) {
             console.log("view department error")
         } else {
@@ -77,7 +91,14 @@ const viewDepartments = () => {
 
 // view roles function
 const viewRoles = () => {
-    db.query(`SELECT * FROM role LEFT JOIN departments ON role.departments_id = departments.id`, function (err, res) {
+
+    db.query(`SELECT title AS TITLE,
+                role.id AS ROLE_ID,
+                departments_name AS DEPARTMENT, 
+                salary AS SALARY, 
+                manager_name AS MANAGER
+                FROM role 
+                `, function (err, res) {
         if (err) {
             console.log("view roles error")
         } else {
@@ -90,9 +111,17 @@ const viewRoles = () => {
 
 // view employees function
 const viewEmployees = () => {
-     
-        db.query(`SELECT employees.id,  first_name, last_name, manager_name, role.id AS role_id FROM employees LEFT JOIN role ON employees.role_id = role.id
-                `, function (err, res) {    
+
+    db.query(`SELECT employees.id AS EMPLOYEE_ID,  
+                first_name AS FIRST_NAME, 
+                last_name AS LAST_NAME, 
+                title AS TITLE,
+                departments_name AS DEPARTMENT, 
+                salary AS SALARY, 
+                manager_name as MANAGER
+                FROM employees
+                LEFT JOIN role ON employees.role_id = role.id;
+                `, function (err, res) {
 
         if (err) {
             console.log("view employees error")
@@ -127,35 +156,10 @@ const addDepartment = () => {
                         }
                     }
                 },
-                // {
-                //     type: 'input',
-                //     name: 'departmentId',
-                //     message: 'Please enter department ID(Required)',
-                //     validate: departmentIdInput => {
-                //         if (departmentIdInput) {
-                //             return true;
-                //         } else {
-                //             console.log("Please enter department ID!");
-                //             return false;
-                //         }
-                //     }
-                // },
-                // {
-                //     type: 'input',
-                //     name: 'managerName',
-                //     message: 'Please enter Manager name(Required)',
-                //     validate: managerNameInput => {
-                //         if (managerNameInput) {
-                //             return true;
-                //         } else {
-                //             console.log("Please enter Manager name!");
-                //             return false;
-                //         }
-                //     }
-                // }
+
             ])
                 .then(function (answer) {
-                    db.query("INSERT INTO departments (departments_name ) VALUES (?)", [answer.department, answer.departmentId, ], function (err, res) {
+                    db.query("INSERT INTO departments (departments_name ) VALUES (?)", [answer.department, answer.departmentId,], function (err, res) {
                         if (err) throw err;
                         // console.log(res);
                         console.log("New Department Created!")
@@ -200,6 +204,19 @@ const addRole = () => {
         },
         {
             type: 'input',
+            name: 'departmentName',
+            message: 'Please enter department name (Required)',
+            validate: departmentNameInput => {
+                if (departmentNameInput) {
+                    return true;
+                } else {
+                    console.log("Please enter department name!");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
             name: 'departmentId',
             message: 'Please enter department ID (Required)',
             validate: departmentIdInput => {
@@ -213,7 +230,7 @@ const addRole = () => {
         }
     ])
         .then(function (answer) {
-            db.query("INSERT INTO role (title, salary, departments_id) VALUES (?,?,?)", [answer.role, answer.salary, answer.departmentId], function (err, res) {
+            db.query("INSERT INTO role (title, salary, departments_ name, departments_id) VALUES (?,?,?,?)", [answer.role, answer.salary, answer.departmentName, answer.departmentId], function (err, res) {
                 if (err) throw err;
                 console.log("New Department Created!")
                 introQuestions();
@@ -254,19 +271,6 @@ const addEmployee = () => {
         },
         {
             type: 'input',
-            name: 'employeeManager',
-            message: "Please enter new employee's Manager  (Required)",
-            validate: employeeManagerInput => {
-                if (employeeManagerInput) {
-                    return true;
-                } else {
-                    console.log("Please enter new employee's Manager !");
-                    return false;
-                }
-            }
-        },
-        {
-            type: 'input',
             name: 'employeeRoleId',
             message: "Please enter new employee's role ID (Required)",
             validate: employeeRoleIdInput => {
@@ -280,10 +284,8 @@ const addEmployee = () => {
         },
 
     ])
-
-
         .then(function (answer) {
-            db.query("INSERT INTO employees (first_name, last_name, role_id, manager_name) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManager], function (err, res) {
+            db.query("INSERT INTO employees (first_name, last_name, role_id) VALUES (?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManager,], function (err, res) {
                 if (err) throw err;
                 console.log("New Employee Created!")
                 introQuestions();
@@ -294,7 +296,7 @@ const addEmployee = () => {
 
 // update employee function
 const updateEmployee = () => {
-    // console.log("update employee role")
+
     db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`,
         function (err, employeeNames) {
             if (err) throw err;
@@ -314,7 +316,7 @@ const updateEmployee = () => {
                 choices: employeeNames
             })
                 .then(function (answer) {
-                    // let employeeNames = answer.employee.split("");
+
                     console.log(answer);
                     let id = answer.option
                     return inquirer.prompt([
@@ -338,18 +340,15 @@ const updateEmployee = () => {
 
 // remove employee function
 const removeEmployee = () => {
-    // console.log("update employee role")
+
     db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`, function (err, employeeNames) {
         if (err) throw err;
-        console.log(employeeNames)
         employeeNames = employeeNames.map(employee => {
             return {
                 name: employee.employeeName,
                 value: employee.id
             }
         })
-
-
 
         return inquirer.prompt({
 
@@ -390,20 +389,3 @@ app.listen('3001', () => {
 
 
 
-// GIVEN a command-line application that accepts user input
-// WHEN I start the application
-// THEN I am presented with the following options: view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
-// WHEN I choose to view all departments
-// THEN I am presented with a formatted table showing department names and department ids
-// WHEN I choose to view all roles
-// THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
-// WHEN I choose to view all employees
-// THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
-// WHEN I choose to add a department
-// THEN I am prompted to enter the name of the department and that department is added to the database
-// WHEN I choose to add a role
-// THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database
-// WHEN I choose to add an employee
-// THEN I am prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database
-// WHEN I choose to update an employee role
-// THEN I am prompted to select an employee to update and their new role and this information is updated in the database 
