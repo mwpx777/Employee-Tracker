@@ -31,7 +31,7 @@ GitHub deployed application
 https://mwpx777.github.io/Employee-Tracker/
 
 ## **Screenshot**
-![screenshot](assets\images\screenshot.PNG)
+![screenshot](screenshot.PNG)
 
 
 ## **Installation**
