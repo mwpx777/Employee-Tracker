@@ -3,6 +3,7 @@ const inquirer = require('inquirer');
 const consoleTable = require('console.table');
 const mysql = require('mysql');
 const app = express();
+const mysql2 = require('mysql2');
 
 
 // create connection
@@ -89,11 +90,8 @@ const viewRoles = () => {
 
 // view employees function
 const viewEmployees = () => {
-    // db.query(`SELECT  first_name, last_name, role_id, manager_id FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
-
-    // db.query(`SELECT * FROM employees LEFT JOIN managers ON employees.manager_id = managers.id `, function (err, res) {
-
-        db.query(`SELECT * FROM employees LEFT JOIN role ON employees.role_id = role.id
+     
+        db.query(`SELECT employees.id,  first_name, last_name, manager_name, role.id AS role_id FROM employees LEFT JOIN role ON employees.role_id = role.id
                 `, function (err, res) {    
 
         if (err) {
@@ -129,22 +127,35 @@ const addDepartment = () => {
                         }
                     }
                 },
-                {
-                    type: 'input',
-                    name: 'managerId',
-                    message: 'Please enter Manager ID(Required)',
-                    validate: departmentInput => {
-                        if (departmentInput) {
-                            return true;
-                        } else {
-                            console.log("Please enter Manager ID!");
-                            return false;
-                        }
-                    }
-                }
+                // {
+                //     type: 'input',
+                //     name: 'departmentId',
+                //     message: 'Please enter department ID(Required)',
+                //     validate: departmentIdInput => {
+                //         if (departmentIdInput) {
+                //             return true;
+                //         } else {
+                //             console.log("Please enter department ID!");
+                //             return false;
+                //         }
+                //     }
+                // },
+                // {
+                //     type: 'input',
+                //     name: 'managerName',
+                //     message: 'Please enter Manager name(Required)',
+                //     validate: managerNameInput => {
+                //         if (managerNameInput) {
+                //             return true;
+                //         } else {
+                //             console.log("Please enter Manager name!");
+                //             return false;
+                //         }
+                //     }
+                // }
             ])
                 .then(function (answer) {
-                    db.query("INSERT INTO departments (departments_name, manager_id) VALUES (?,?)", [answer.department, answer.managerId], function (err, res) {
+                    db.query("INSERT INTO departments (departments_name ) VALUES (?)", [answer.department, answer.departmentId, ], function (err, res) {
                         if (err) throw err;
                         // console.log(res);
                         console.log("New Department Created!")
@@ -243,13 +254,13 @@ const addEmployee = () => {
         },
         {
             type: 'input',
-            name: 'employeeManagerId',
-            message: "Please enter new employee's Manager ID (Required)",
-            validate: employeeManagerIdInput => {
-                if (employeeManagerIdInput) {
+            name: 'employeeManager',
+            message: "Please enter new employee's Manager  (Required)",
+            validate: employeeManagerInput => {
+                if (employeeManagerInput) {
                     return true;
                 } else {
-                    console.log("Please enter new employee's Manager ID!");
+                    console.log("Please enter new employee's Manager !");
                     return false;
                 }
             }
@@ -272,7 +283,7 @@ const addEmployee = () => {
 
 
         .then(function (answer) {
-            db.query("INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManagerId], function (err, res) {
+            db.query("INSERT INTO employees (first_name, last_name, role_id, manager_name) VALUES (?,?,?,?)", [answer.employeeFirstName, answer.employeeLastName, answer.employeeRoleId, answer.employeeManager], function (err, res) {
                 if (err) throw err;
                 console.log("New Employee Created!")
                 introQuestions();
