@@ -318,7 +318,7 @@ const updateEmployee = () => {
     db.query(`SELECT concat(first_name, ' ' ,last_name) as employeeName, id FROM employees`,
         function (err, employeeNames) {
             if (err) throw err;
-            console.log(employeeNames)
+            // console.log(employeeNames)
             employeeNames = employeeNames.map(employee => {
                 return {
                     name: employee.employeeName,
